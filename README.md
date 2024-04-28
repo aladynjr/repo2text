@@ -3,7 +3,7 @@
 
 ## Overview
 
-`repo2text` extracts text content from any GitHub repository into a single .txt file that can be used to provide the entire codebase context to ChatGPT.
+`repo2text` compiles the entire codebase from any GitHub repository into a single `.txt` file for use with ChatGPT.
 
 ## Features
 
