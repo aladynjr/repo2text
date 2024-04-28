@@ -24,7 +24,7 @@ Ensure you have Node.js installed on your system. You can download it from [Node
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/repo2text.git
+   git clone https://github.com/aladynjr/repo2text.git
    ```
 2. Navigate to the repository directory:
    ```
