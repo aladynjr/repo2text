@@ -5,6 +5,10 @@
 
 `repo2text` compiles the entire codebase from any GitHub repository into a single `.txt` file for use with ChatGPT.
 
+
+How I personally use it: I host the project on a VPS and keep a bookmark for the download link of my current project's repository. Then, I drag the resulting .txt file into ChatGPT.
+
+
 ## Features
 
 - Filters out non-text files and certain directories (e.g., `node_modules`, `.git`).
