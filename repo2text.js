@@ -4,6 +4,9 @@ const fs = require('fs-extra');
 const app = express();
 require('dotenv').config();
 const { exec } = require('child_process');
+
+
+
 app.get('/repo', async (req, res) => {
     let repoUrl = req.query.repoName;
 
@@ -11,7 +14,6 @@ app.get('/repo', async (req, res) => {
         return res.status(400).send('Repository URL not specified');
     }
 
-    // Ensure that the repository URL starts with 'https://github.com/'
     if (!repoUrl.startsWith('https://github.com/')) {
         repoUrl = `https://github.com/${repoUrl}.git`;
     }
@@ -23,7 +25,7 @@ app.get('/repo', async (req, res) => {
         // Ensure the directory is clean
         await fs.remove(localPath);
 
-        // Construct the clone command
+        // Clone the repository
         const cloneCommand = process.env.GITHUB_TOKEN
             ? `git clone https://${process.env.GITHUB_TOKEN}@${repoUrl.substring(8)} ${localPath}`
             : `git clone ${repoUrl} ${localPath}`;
@@ -31,7 +33,10 @@ app.get('/repo', async (req, res) => {
 
         // Read files excluding the ignored ones
         const content = await processFiles(localPath);
-        res.send(content.join('\n'));
+        const outputFile = path.join(__dirname, 'output', `${repoName}.txt`);
+        await fs.outputFile(outputFile, content.join('')); // Join without newlines
+
+        res.download(outputFile, `${repoName}.txt`);
     } catch (error) {
         console.error('Failed to process repository:', error);
         res.status(500).send(`Server error: ${error.message}`);
