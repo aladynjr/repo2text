@@ -57,8 +57,8 @@ async function execPromise(command) {
     });
 }
     async function processFiles(dir) {
-        const ignorePatterns = [ 'LICENSE', 'package-lock.json', 'yarn.lock', 'node_modules', '.DS_Store', '.env', '.env.*', '.git', '.gitignore', 'build', 'dist', 'coverage', '.vscode', '.idea', '*.log', '*.tgz'];
-        const mediaExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.mp4', '.mp3'];
+        const ignorePatterns = [ 'LICENSE', 'package-lock.json', 'yarn.lock', 'node_modules', '.DS_Store', '.env', '.env.*', '.git', '.gitignore', 'build', 'dist', 'coverage', '.vscode', '.idea', '*.log', '*.tgz', 'firebase.json', '.firebaserc', 'firestore.rules', 'firestore.indexes.json'];
+        const mediaExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.mp4', '.mp3', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.webp'];
         let results = [];
     
         const files = await fs.readdir(dir);
