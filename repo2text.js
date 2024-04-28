@@ -56,36 +56,38 @@ async function execPromise(command) {
         });
     });
 }
-async function processFiles(dir) {
-    const ignorePatterns = [ 'LICENSE', 'package-lock.json', 'yarn.lock', 'node_modules', '.DS_Store', '.env', '.env.*', '.git', '.gitignore', 'build', 'dist', 'coverage', '.vscode', '.idea', '*.log', '*.tgz'];
-    const mediaExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.mp4', '.mp3'];
-    let results = [];
-
-    const files = await fs.readdir(dir);
-    for (const file of files) {
-        const filePath = path.join(dir, file);
-        const stat = await fs.stat(filePath);
-
-        if (ignorePatterns.some(pattern => filePath.includes(pattern))) continue;
-
-        if (stat.isDirectory()) {
-            results.push(`Directory: ${file}`);
-            const subdirResults = await processFiles(filePath);
-            results = results.concat(subdirResults);
-        } else {
-            const fileExtension = path.extname(file).toLowerCase();
-            if (mediaExtensions.includes(fileExtension)) {
-                results.push(`File: ${file} (media file, content not displayed)`);
+    async function processFiles(dir) {
+        const ignorePatterns = [ 'LICENSE', 'package-lock.json', 'yarn.lock', 'node_modules', '.DS_Store', '.env', '.env.*', '.git', '.gitignore', 'build', 'dist', 'coverage', '.vscode', '.idea', '*.log', '*.tgz'];
+        const mediaExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.mp4', '.mp3'];
+        let results = [];
+    
+        const files = await fs.readdir(dir);
+        for (const file of files) {
+            const filePath = path.join(dir, file);
+            const stat = await fs.stat(filePath);
+    
+            if (ignorePatterns.some(pattern => filePath.includes(pattern))) continue;
+    
+            if (stat.isDirectory()) {
+                results.push(`Directory: ${file}`);
+                const subdirResults = await processFiles(filePath);
+                results = results.concat(subdirResults);
             } else {
-                const content = await fs.readFile(filePath, 'utf8');
-                const compressedContent = content.replace(/(\r\n|\n|\r)/gm, ""); // Remove all newlines
-                results.push(`File: ${file} --- ${compressedContent} ---`);
+                const fileExtension = path.extname(file).toLowerCase();
+                if (mediaExtensions.includes(fileExtension)) {
+                    results.push(`File: ${file} (media file, content not displayed)`);
+                } else {
+                    const content = await fs.readFile(filePath, 'utf8');
+                    // Remove all newlines and replace multiple spaces with a single space
+                    const compressedContent = content.replace(/(\r\n|\n|\r)+/gm, " ").replace(/\s\s+/g, ' ');
+                    results.push(`File: ${file} --- ${compressedContent} ---`);
+                }
             }
         }
+    
+        return results;
     }
-
-    return results;
-}
+    
 
 app.listen(3000, () => {
     console.log('Server started on port 3000');
