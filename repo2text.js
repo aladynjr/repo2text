@@ -43,11 +43,69 @@ app.get('/repo', async (req, res) => {
     }
 });
 
+app.get('/file-history', async (req, res) => {
+    let { repoName, filePath } = req.query;
+
+    if (!repoName || !filePath) {
+        return res.status(400).send('Repository name or file path not specified');
+    }
+
+    const repoUrl = `https://github.com/${repoName}.git`;
+    const localPath = path.join(__dirname, 'repo', path.basename(repoName, '.git'));
+    const localFilePath = path.join(localPath, filePath);
+
+    try {
+        await fs.remove(localPath);  // Ensure the directory is clean
+        const cloneCommand = process.env.GITHUB_TOKEN
+            ? `git clone https://${process.env.GITHUB_TOKEN}@${repoUrl.substring(8)} ${localPath}`
+            : `git clone ${repoUrl} ${localPath}`;
+        await execPromise(cloneCommand);
+
+        const blameCommand = `git blame -p -- ${path.relative(localPath, localFilePath)}`;
+        const fileBlame = await execPromise(blameCommand, { cwd: localPath });
+
+        // Split the output into sections per line
+        const lines = fileBlame.split('\n');
+        const lineHistory = [];
+        let currentSection = [];
+
+        // Example: fetch and store the initial commit date
+        const initialCommitCommand = `git log --format=%at --reverse -- ${filePath}`;
+        const initialCommitTimestamp = await execPromise(initialCommitCommand, { cwd: localPath });
+        const initialCommitDate = new Date(parseInt(initialCommitTimestamp.trim(), 10) * 1000).toISOString().substring(0, 10);
+
+        lines.forEach(line => {
+            if (line.startsWith('\t')) {  // Detect the start of a new line of code
+                if (line.trim().length > 1) {  // Ignore empty lines
+                    const authorTimeLine = currentSection.find(l => l.startsWith('author-time '));
+                    const unixTimestamp = authorTimeLine ? parseInt(authorTimeLine.split(' ')[1], 10) : null;
+                    const date = unixTimestamp ? new Date(unixTimestamp * 1000).toISOString().substring(0, 10) : initialCommitDate;
+                    lineHistory.push(`${date}: ${line.substring(1)}`); // Skip the tab character
+                }
+                currentSection = []; // Reset for the next section
+            } else {
+                currentSection.push(line); // Accumulate lines for current section
+            }
+        });
+        res.send(lineHistory.join('\n'));
+    } catch (error) {
+        console.error('Failed to process file history:', error);
+        res.status(500).send(`Server error: ${error.message}`);
+    }
+});
 
 
-async function execPromise(command) {
+
+
+async function execPromise(command, options = {}) {
     return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
+        // Set the GIT_PAGER environment variable to 'cat' to disable paging
+        const env = { ...process.env, GIT_PAGER: 'cat' };
+
+        // Include the modified environment in the execution options
+        const execOptions = { ...options, env };
+
+        exec(command, execOptions, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             } else {
@@ -56,6 +114,7 @@ async function execPromise(command) {
         });
     });
 }
+
     async function processFiles(dir) {
         const ignorePatterns = [ 'LICENSE', 'package-lock.json', 'yarn.lock', 'node_modules', '.DS_Store', '.env', '.env.*', '.git', '.gitignore', 'build', 'dist', 'coverage', '.vscode', '.idea', '*.log', '*.tgz', 'firebase.json', '.firebaserc', 'firestore.rules', 'firestore.indexes.json'];
         const mediaExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.mp4', '.mp3', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.webp'];
