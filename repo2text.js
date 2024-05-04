@@ -43,6 +43,8 @@ app.get('/repo', async (req, res) => {
     }
 });
 
+
+
 app.get('/file-history', async (req, res) => {
     let { repoName, filePath } = req.query;
 
@@ -80,7 +82,7 @@ app.get('/file-history', async (req, res) => {
                     const authorTimeLine = currentSection.find(l => l.startsWith('author-time '));
                     const unixTimestamp = authorTimeLine ? parseInt(authorTimeLine.split(' ')[1], 10) : null;
                     const date = unixTimestamp ? new Date(unixTimestamp * 1000).toISOString().substring(0, 10) : initialCommitDate;
-                    lineHistory.push(`${date}: ${line.substring(1)}`); // Skip the tab character
+                    lineHistory.push(`|${date}| ${line.substring(1)}`); // Skip the tab character
                 }
                 currentSection = []; // Reset for the next section
             } else {
