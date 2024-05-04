@@ -8,11 +8,37 @@
 
 How I personally use it: I host the project on a VPS and keep a bookmark for the download link of my current project's repository. Then, I drag the resulting .txt file into ChatGPT.
 
+## Endpoints
+
+### `/repo`
+
+**Description:** 
+Outputs textual content of a GitHub repository specified by the `repoName` query parameter into a downloadable text file.
+
+**Input:**
+- `repoName` (required) - Name of the GitHub repository.
+
+**Output:**
+- Text file containing repository content.
+
+### `/file-history`
+
+**Description:** 
+Attaches a last updated timestamp to each line of a file in a GitHub repository specified by `repoName` and `filePath`.
+
+**Input:**
+- `repoName` (required) - Name of the GitHub repository.
+- `filePath` (required) - Path to the file in the repository.
+
+**Output:**
+- Text file with last updated timestamp attached to each line.
+
+
 
 ## Features
 
 - Filters out non-text files and certain directories (e.g., `node_modules`, `.git`).
-- Produces a single text file summarizing the repository's textual content.
+
 
 ## Getting Started
 
