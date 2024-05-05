@@ -97,6 +97,75 @@ app.get('/file-history', async (req, res) => {
 });
 
 
+const { Tiktoken } = require("tiktoken/lite");
+const cl100k_base = require("tiktoken/encoders/cl100k_base.json");
+
+
+app.get('/latest-updates', async (req, res) => {
+    const { repoName } = req.query;
+
+    if (!repoName) {
+        return res.status(400).send('Repository name not specified');
+    }
+
+    const repoUrl = `https://github.com/${repoName}.git`;
+    const localPath = path.join(__dirname, 'repo', path.basename(repoName, '.git'));
+
+    try {
+        const FIVE_MINUTES = 300000; // Milliseconds
+        let shouldClone = true;
+
+        if (await fs.pathExists(localPath)) {
+            const { mtime } = await fs.stat(localPath);
+            const now = new Date();
+            if ((now - mtime) < FIVE_MINUTES) {
+                shouldClone = false;
+            } else {
+                await fs.remove(localPath);  // Clean up old directory if more than 5 minutes old
+            }
+        }
+
+        if (shouldClone) {
+            const cloneCommand = process.env.GITHUB_TOKEN
+                ? `git clone https://${process.env.GITHUB_TOKEN}@${repoUrl.substring(8)} ${localPath}`
+                : `git clone ${repoUrl} ${localPath}`;
+            await execPromise(cloneCommand);
+        } 
+        // Fetch all commits within the last month
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const logCommand = `git log -p --since="${oneMonthAgo.toISOString()}" -- . ":!package-lock.json"`;
+        let logOutput = await execPromise(logCommand, { cwd: localPath });
+
+        // Setup Tiktoken encoding
+        const encoding = new Tiktoken(
+            cl100k_base.bpe_ranks,
+            cl100k_base.special_tokens,
+            cl100k_base.pat_str
+        );
+
+        // Split log output by commits
+        let commits = logOutput.split(/(?=commit [a-f0-9]{40})/);
+
+        // Tokenize the entire commits array
+        let tokens = encoding.encode(commits.join('\n'));
+
+        // Check if the token count exceeds 4000 and adjust
+        const TOKEN_LIMIT = 8000;
+        while (tokens.length > TOKEN_LIMIT && commits.length > 0) {
+            // Remove the oldest commit
+            commits.pop();
+            tokens = encoding.encode(commits.join('\n'));
+        }
+
+        encoding.free(); // Free up memory used by Tiktoken
+
+        res.send(commits.join('\n'));
+    } catch (error) {
+        console.error('Failed to process latest commits:', error);
+        res.status(500).send(`Server error: ${error.message}`);
+    }
+});
 
 
 async function execPromise(command, options = {}) {

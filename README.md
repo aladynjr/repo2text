@@ -6,8 +6,7 @@
 `repo2text` compiles the entire codebase from any GitHub repository into a single `.txt` file for use with ChatGPT.
 
 
-How I personally use it: I host the project on a VPS and keep a bookmark for the download link of my current project's repository. Then, I drag the resulting .txt file into ChatGPT.
-
+How I personally use it: I host the project on a VPS and keep a bookmark for the download link of my current project's repository. Then, I drag the resulting .txt file into ChatGPT, Or add the different endpoints as actions in my custom GPT.
 ## Endpoints
 
 ### `/repo`
@@ -33,12 +32,22 @@ Attaches a last updated timestamp to each line of a file in a GitHub repository 
 **Output:**
 - Text file with last updated timestamp attached to each line.
 
+### `/latest-updates`
+
+**Description:** 
+Fetches and displays the latest committed updates from the past month for a specified GitHub repository, subject to either a token limit of 8000 tokens or the end of the one-month period, whichever condition is met first.
+
+**Input:**
+- `repoName` (required) - Name of the GitHub repository.
+
+**Output:**
+- Text representation of the most recent pushed updates.
+
 
 
 ## Features
 
 - Filters out non-text files and certain directories (e.g., `node_modules`, `.git`).
-
 
 ## Getting Started
 
