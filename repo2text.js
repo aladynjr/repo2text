@@ -135,7 +135,10 @@ app.get('/latest-updates', async (req, res) => {
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         const logCommand = `git log -p --since="${oneMonthAgo.toISOString()}" -- . ":!package-lock.json"`;
+        const commitFetchStart = Date.now();
         let logOutput = await execPromise(logCommand, { cwd: localPath });
+        const commitFetchEnd = Date.now();
+        console.log(`Commit fetching took ${(commitFetchEnd - commitFetchStart) / 1000} seconds`);
 
         // Setup Tiktoken encoding
         const encoding = new Tiktoken(
@@ -148,7 +151,10 @@ app.get('/latest-updates', async (req, res) => {
         let commits = logOutput.split(/(?=commit [a-f0-9]{40})/);
 
         // Tokenize the entire commits array
+        const tokenizationStart = Date.now();
         let tokens = encoding.encode(commits.join('\n'));
+        const tokenizationEnd = Date.now();
+        console.log(`Tokenization took ${(tokenizationEnd - tokenizationStart) / 1000} seconds`);
 
         // Check if the token count exceeds 4000 and adjust
         const TOKEN_LIMIT = 8000;
